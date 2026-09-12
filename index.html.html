@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendário 2º Semestre 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --azul-escuro: #0d2b4e;
+    --azul-medio: #1a4b82;
+    --azul-claro: #dceaf7;
+    --azul-claro-2: #eef5fc;
+    --branco: #ffffff;
+    --texto: #16324f;
+
+    --cor-entrega: #c9852b;
+    --cor-entrega-bg: #fbead2;
+    --cor-atividade: #2f8f6a;
+    --cor-atividade-bg: #e0f3ea;
+    --cor-apresentacao: #7a55a8;
+    --cor-apresentacao-bg: #ece3f6;
+    --cor-moodle: #1b7f96;
+    --cor-moodle-bg: #d9eef2;
+    --cor-provas: #c9463c;
+    --cor-provas-bg: #f8dcd9;
+    --cor-feriado: #b8560f;
+    --cor-feriado-bg: #ffe3b0;
+    --cor-passado-bg: #eef0f2;
+    --cor-passado-texto: #a3aebb;
+
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--azul-claro-2);
+    color: var(--texto);
+    padding-bottom: 100px;
+  }
+
+  header{
+    background: var(--azul-escuro);
+    color: var(--branco);
+    padding: 22px 18px 26px;
+    text-align: center;
+  }
+
+  header h1{
+    margin:0 0 4px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+
+  header p{
+    margin:0;
+    font-size: 0.85rem;
+    color: #bcd3ea;
+  }
+
+  #status-conexao{
+    display:block;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: #f3c9c4;
+  }
+
+  .legenda{
+    max-width: 680px;
+    margin: -16px auto 20px;
+    background: var(--branco);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 14px rgba(13,43,78,0.12);
+    padding: 14px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    justify-content: center;
+    font-size: 0.78rem;
+  }
+
+  .legenda-item{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    white-space: nowrap;
+  }
+
+  .ponto{
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink:0;
+  }
+
+  .ponto.entrega{ background: var(--cor-entrega); }
+  .ponto.atividade{ background: var(--cor-atividade); }
+  .ponto.apresentacao{ background: var(--cor-apresentacao); }
+  .ponto.moodle{ background: var(--cor-moodle); }
+  .ponto.prova{ background: var(--cor-provas); }
+  .ponto.feriado{ background: var(--cor-feriado); }
+
+  main{
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 12px;
+  }
+
+  @media (min-width: 700px){
+    .legenda{ max-width: 900px; font-size: 0.85rem; }
+    main{ max-width: 900px; }
+    .dia{ min-height: 100px; font-size: 0.82rem; padding: 8px 7px; }
+    .dia .num{ font-size: 0.9rem; }
+    .evento{ font-size: 0.68rem; padding: 3px 5px; }
+    .mes-titulo{ font-size: 1.15rem; padding: 14px 18px; }
+    .dia-semana{ font-size: 0.72rem; padding: 10px 2px; }
+    header h1{ font-size: 1.8rem; }
+    header p{ font-size: 0.95rem; }
+  }
+
+  @media (min-width: 1100px){
+    .legenda{ max-width: 1080px; }
+    main{ max-width: 1080px; }
+    .dia{ min-height: 118px; font-size: 0.88rem; }
+    .evento{ font-size: 0.72rem; }
+  }
+
+  .mes{
+    background: var(--branco);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 14px rgba(13,43,78,0.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .mes-titulo{
+    background: var(--azul-medio);
+    color: var(--branco);
+    padding: 12px 16px;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .dia-semana{
+    text-align:center;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--azul-medio);
+    padding: 8px 2px;
+    background: var(--azul-claro);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .dia{
+    min-height: 66px;
+    border: 1px solid #eef1f5;
+    padding: 5px 4px;
+    position: relative;
+    font-size: 0.72rem;
+    background: var(--branco);
+  }
+
+  .dia.vazio{
+    background: var(--azul-claro-2);
+    border: 1px solid #eef1f5;
+  }
+
+  .dia .num{
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--texto);
+    display:block;
+    margin-bottom: 3px;
+  }
+
+  .evento{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 2px;
+    font-size: 0.6rem;
+    line-height: 1.15;
+    border-radius: 5px;
+    padding: 2px 4px;
+    margin-top: 2px;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .evento span.txt{ flex:1; cursor: default; }
+  .evento .icones{ display:flex; align-items:center; flex-shrink:0; }
+  .evento .icone{
+    cursor:pointer;
+    opacity: 0.55;
+    font-weight: 700;
+    padding-left: 4px;
+    font-size: 0.72rem;
+  }
+  .evento .icone:hover{ opacity: 1; }
+
+  .evento.entrega{ background: var(--cor-entrega-bg); color: var(--cor-entrega); }
+  .evento.atividade{ background: var(--cor-atividade-bg); color: var(--cor-atividade); }
+  .evento.apresentacao{ background: var(--cor-apresentacao-bg); color: var(--cor-apresentacao); }
+  .evento.moodle{ background: var(--cor-moodle-bg); color: var(--cor-moodle); }
+
+  .dia.provas{
+    background: var(--cor-provas-bg);
+    cursor: pointer;
+  }
+  .dia.provas:active{ filter: brightness(0.97); }
+  .dia.provas .num{ color: var(--cor-provas); }
+
+  .selo-provas{
+    display:block;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: var(--cor-provas);
+    margin-top: 2px;
+    letter-spacing: 0.01em;
+  }
+  .selo-provas.vazio{
+    font-weight: 500;
+    opacity: 0.6;
+    text-transform: none;
+  }
+  .selo-provas.na{
+    color: #7c8a99;
+  }
+
+  .dia.passado{
+    background: var(--cor-passado-bg);
+  }
+  .dia.passado .num{
+    color: var(--cor-passado-texto);
+  }
+
+  .dia.feriado{
+    background: var(--cor-feriado-bg);
+  }
+  .dia.feriado .num{ color: var(--cor-feriado); }
+
+  .selo-feriado{
+    display:block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--cor-feriado);
+    margin-top: 2px;
+  }
+
+  footer{
+    text-align:center;
+    font-size: 0.72rem;
+    color: #6b88a5;
+    margin-top: 10px;
+    padding: 0 16px;
+  }
+
+  /* botão flutuante */
+  #botao-add{
+    position: fixed;
+    right: 20px;
+    bottom: 22px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--azul-escuro);
+    color: var(--branco);
+    border: none;
+    font-size: 1.6rem;
+    line-height: 1;
+    box-shadow: 0 6px 16px rgba(13,43,78,0.35);
+    cursor: pointer;
+    z-index: 50;
+  }
+  #botao-add:active{ transform: scale(0.95); }
+
+  /* modais */
+  .overlay{
+    display:none;
+    position: fixed;
+    inset:0;
+    background: rgba(13,43,78,0.45);
+    z-index: 100;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .overlay.aberto{ display:flex; }
+
+  .modal{
+    background: var(--branco);
+    width: 100%;
+    max-width: 420px;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px 26px;
+    animation: subir 0.18s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  @media (min-width: 480px){
+    .overlay{ align-items:center; }
+    .modal{ border-radius: 14px; }
+  }
+
+  @keyframes subir{
+    from{ transform: translateY(30px); opacity:0; }
+    to{ transform: translateY(0); opacity:1; }
+  }
+
+  .modal h2{
+    margin: 0 0 14px;
+    font-size: 1.05rem;
+    color: var(--azul-escuro);
+  }
+
+  .modal label{
+    display:block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--azul-medio);
+    margin: 12px 0 5px;
+  }
+
+  .modal select,
+  .modal input[type="text"],
+  .modal input[type="date"]{
+    width: 100%;
+    padding: 10px 10px;
+    border-radius: 8px;
+    border: 1px solid #cfdcea;
+    font-size: 0.9rem;
+    background: var(--azul-claro-2);
+    color: var(--texto);
+  }
+
+  .modal-botoes{
+    display:flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .modal-botoes button{
+    flex:1;
+    padding: 11px 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .btn-cancelar{ background: var(--azul-claro); color: var(--azul-medio); }
+  .btn-salvar{ background: var(--azul-escuro); color: var(--branco); }
+  .btn-na{ background: var(--cor-provas-bg); color: var(--cor-provas); }
+  .btn-excluir{ background: var(--cor-provas-bg); color: var(--cor-provas); flex: 0 0 auto; }
+
+  .modal-botoes.tres button{ flex: 1 1 30%; font-size: 0.78rem; padding: 11px 4px; }
+
+  @media (min-width: 480px) and (max-width: 699px){
+    .dia{ min-height: 80px; font-size: 0.78rem; }
+    .evento{ font-size: 0.64rem; }
+    header h1{ font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Calendário 2º Semestre 2026</h1>
+  <p>Setembro — Dezembro</p>
+  <span id="status-conexao"></span>
+</header>
+
+<div class="legenda">
+  <div class="legenda-item"><span class="ponto entrega"></span>Entrega TCC</div>
+  <div class="legenda-item"><span class="ponto atividade"></span>Atividades em aula</div>
+  <div class="legenda-item"><span class="ponto apresentacao"></span>Apresentação</div>
+  <div class="legenda-item"><span class="ponto moodle"></span>Entregas Moodle</div>
+  <div class="legenda-item"><span class="ponto prova"></span>Semana de provas</div>
+  <div class="legenda-item"><span class="ponto feriado"></span>Feriado 🎉</div>
+</div>
+
+<main id="calendario">
+  <p style="text-align:center; color:#6b88a5; padding: 30px 0;">Carregando dados do Supabase…</p>
+</main>
+
+<footer>Toque no lápis de qualquer atividade para editar o título ou a data. Nos dias da semana de provas, toque no dia para marcar a prova (ou N/A).</footer>
+
+<button id="botao-add" onclick="abrirModalAtividade()" aria-label="Adicionar atividade">+</button>
+
+<!-- Modal: nova atividade / edição -->
+<div class="overlay" id="overlay-atividade">
+  <div class="modal">
+    <h2 id="titulo-modal-atividade">Nova atividade</h2>
+
+    <label for="input-topico">Tópico</label>
+    <select id="input-topico">
+      <option value="entrega">Entrega TCC</option>
+      <option value="atividade">Atividades em aula</option>
+      <option value="apresentacao">Apresentação</option>
+      <option value="moodle">Entregas Moodle</option>
+    </select>
+
+    <label for="input-titulo">Título</label>
+    <input type="text" id="input-titulo" placeholder="Ex: Entrega da Análise SWOT">
+
+    <label for="input-data">Data</label>
+    <input type="date" id="input-data" min="2026-08-01" max="2026-12-31">
+
+    <div class="modal-botoes">
+      <button class="btn-excluir" id="btn-excluir-atividade" style="display:none" onclick="excluirAtividadeAtual()">Excluir</button>
+      <button class="btn-cancelar" onclick="fecharModalAtividade()">Cancelar</button>
+      <button class="btn-salvar" onclick="salvarAtividade()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: marcar prova -->
+<div class="overlay" id="overlay-prova">
+  <div class="modal">
+    <h2 id="titulo-prova">Marcar prova</h2>
+
+    <label for="input-prova">Professor(a) / disciplina</label>
+    <input type="text" id="input-prova" placeholder="Ex: Prof. Denise">
+
+    <div class="modal-botoes tres">
+      <button class="btn-cancelar" onclick="fecharModalProva()">Cancelar</button>
+      <button class="btn-na" onclick="marcarNA()">Marcar N/A</button>
+      <button class="btn-salvar" onclick="salvarProva()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- conexão com o Supabase ----------
+const SUPABASE_URL = "https://upqcsltpjpkkkjibguml.supabase.co";
+const SUPABASE_KEY = "sb_publishable_jq3NDcV8RQ2hOz6nhE91rg_C0NmgJL9";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ---------- estado em memória (espelha as tabelas do Supabase) ----------
+let eventos = [];         // linhas da tabela "eventos": {id, data, topico, titulo}
+let periodosProvas = [];  // linhas de "periodos_provas", convertidas para Date
+let provasMarcadas = {};  // { "2026-09-22": "Prof. Fulano" | "N/A" }  (de "provas_marcadas")
+let feriados = {};        // { "2026-10-12": {nome, emoji} }           (de "feriados")
+
+function estaEmProvas(data){
+  return periodosProvas.some(p => data >= p.inicio && data <= p.fim);
+}
+
+const hoje = new Date();
+hoje.setHours(0,0,0,0);
+
+function ehPassado(data){
+  return data < hoje;
+}
+
+const meses = [
+  {ano:2026, mes:8,  nome:"Setembro 2026"},
+  {ano:2026, mes:9,  nome:"Outubro 2026"},
+  {ano:2026, mes:10, nome:"Novembro 2026"},
+  {ano:2026, mes:11, nome:"Dezembro 2026"}
+];
+
+const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
+function pad(n){ return n.toString().padStart(2,"0"); }
+
+// ---------- carregar dados do Supabase ----------
+async function carregarDados(){
+  const status = document.getElementById("status-conexao");
+  try{
+    const [{ data: eventosData, error: e1 },
+           { data: periodosData, error: e2 },
+           { data: provasData, error: e3 },
+           { data: feriadosData, error: e4 }] = await Promise.all([
+      db.from("eventos").select("*").order("data"),
+      db.from("periodos_provas").select("*"),
+      db.from("provas_marcadas").select("*"),
+      db.from("feriados").select("*")
+    ]);
+
+    if(e1 || e2 || e3 || e4){
+      throw (e1 || e2 || e3 || e4);
+    }
+
+    eventos = eventosData || [];
+
+    periodosProvas = (periodosData || []).map(p => ({
+      inicio: new Date(p.inicio + "T00:00:00"),
+      fim: new Date(p.fim + "T00:00:00")
+    }));
+
+    provasMarcadas = {};
+    (provasData || []).forEach(p => { provasMarcadas[p.data] = p.marcador; });
+
+    feriados = {};
+    (feriadosData || []).forEach(f => { feriados[f.data] = { nome: f.nome, emoji: f.emoji }; });
+
+    status.textContent = "";
+  }catch(err){
+    console.error("Erro ao carregar do Supabase:", err);
+    status.textContent = "Não foi possível conectar ao Supabase. Verifique a conexão ou as permissões (RLS) das tabelas.";
+  }
+}
+
+// ---------- renderização ----------
+function renderMes(info){
+  const {ano, mes, nome} = info;
+  const primeiroDia = new Date(ano, mes, 1);
+  const ultimoDia = new Date(ano, mes+1, 0);
+  const totalDias = ultimoDia.getDate();
+  const offset = primeiroDia.getDay();
+
+  let html = `<div class="mes">
+    <div class="mes-titulo">${nome}</div>
+    <div class="grid">`;
+
+  diasSemana.forEach(d => { html += `<div class="dia-semana">${d}</div>`; });
+
+  for(let i=0; i<offset; i++){ html += `<div class="dia vazio"></div>`; }
+
+  for(let dia=1; dia<=totalDias; dia++){
+    const dataObj = new Date(ano, mes, dia);
+    const chave = `${ano}-${pad(mes+1)}-${pad(dia)}`;
+    const emProvas = estaEmProvas(dataObj);
+    const marcado = provasMarcadas[chave];
+    const feriado = feriados[chave];
+    const passado = ehPassado(dataObj);
+
+    const listaEventos = eventos.filter(e => e.data === chave);
+
+    let classes = "dia";
+    if(feriado){
+      classes += " feriado";
+    }else if(emProvas && marcado !== "N/A"){
+      classes += " provas";
+    }else if(passado){
+      classes += " passado";
+    }
+
+    const clickAttr = emProvas ? `onclick="abrirModalProva('${chave}')"` : "";
+
+    html += `<div class="${classes}" ${clickAttr}>`;
+    html += `<span class="num">${dia}</span>`;
+
+    if(feriado){
+      html += `<span class="selo-feriado">${feriado.emoji} ${feriado.nome}</span>`;
+    }
+
+    listaEventos.forEach(ev => {
+      const tituloEscapado = ev.titulo.replace(/'/g, "\\'");
+      html += `<div class="evento ${ev.topico}">
+        <span class="txt">${ev.titulo}</span>
+        <span class="icones">
+          <span class="icone" onclick="event.stopPropagation(); abrirModalEdicao('${ev.id}','${ev.topico}','${tituloEscapado}','${ev.data}')">✎</span>
+          <span class="icone" onclick="event.stopPropagation(); removerEvento('${ev.id}')">✕</span>
+        </span>
+      </div>`;
+    });
+
+    if(emProvas){
+      if(marcado === "N/A"){
+        html += `<span class="selo-provas na">N/A</span>`;
+      }else if(marcado){
+        html += `<span class="selo-provas">Prova: ${marcado}</span>`;
+      }else{
+        html += `<span class="selo-provas vazio">toque p/ marcar</span>`;
+      }
+    }
+
+    html += `</div>`;
+  }
+
+  const totalCelulas = offset + totalDias;
+  const restante = (7 - (totalCelulas % 7)) % 7;
+  for(let i=0; i<restante; i++){ html += `<div class="dia vazio"></div>`; }
+
+  html += `</div></div>`;
+  return html;
+}
+
+function renderTudo(){
+  const container = document.getElementById("calendario");
+  container.innerHTML = meses.map(renderMes).join("");
+}
+
+// ---------- modal: nova atividade / edição ----------
+let idEdicaoAtual = null; // null = criando; caso contrário, uuid do evento sendo editado
+
+function abrirModalAtividade(){
+  idEdicaoAtual = null;
+  document.getElementById("titulo-modal-atividade").textContent = "Nova atividade";
+  document.getElementById("btn-excluir-atividade").style.display = "none";
+  document.getElementById("input-topico").value = "entrega";
+  document.getElementById("input-titulo").value = "";
+  document.getElementById("input-data").value = "";
+  document.getElementById("overlay-atividade").classList.add("aberto");
+}
+
+function abrirModalEdicao(id, topico, titulo, data){
+  idEdicaoAtual = id;
+  document.getElementById("titulo-modal-atividade").textContent = "Editar atividade";
+  document.getElementById("btn-excluir-atividade").style.display = "block";
+  document.getElementById("input-topico").value = topico;
+  document.getElementById("input-titulo").value = titulo;
+  document.getElementById("input-data").value = data;
+  document.getElementById("overlay-atividade").classList.add("aberto");
+}
+
+function fecharModalAtividade(){
+  document.getElementById("overlay-atividade").classList.remove("aberto");
+  idEdicaoAtual = null;
+}
+
+async function salvarAtividade(){
+  const topico = document.getElementById("input-topico").value;
+  const titulo = document.getElementById("input-titulo").value.trim();
+  const data = document.getElementById("input-data").value;
+
+  if(!titulo){ alert("Digite um título para a atividade."); return; }
+  if(!data){ alert("Selecione uma data."); return; }
+
+  try{
+    if(idEdicaoAtual){
+      const { error } = await db.from("eventos")
+        .update({ topico, titulo, data })
+        .eq("id", idEdicaoAtual);
+      if(error) throw error;
+    }else{
+      const { error } = await db.from("eventos").insert({ topico, titulo, data });
+      if(error) throw error;
+    }
+    await carregarDados();
+    fecharModalAtividade();
+    renderTudo();
+  }catch(err){
+    console.error(err);
+    alert("Não foi possível salvar no Supabase. Veja o console para detalhes.");
+  }
+}
+
+async function excluirAtividadeAtual(){
+  if(!idEdicaoAtual) return;
+  if(!confirm("Excluir esta atividade?")) return;
+  await removerEvento(idEdicaoAtual);
+  fecharModalAtividade();
+}
+
+async function removerEvento(id){
+  try{
+    const { error } = await db.from("eventos").delete().eq("id", id);
+    if(error) throw error;
+    await carregarDados();
+    renderTudo();
+  }catch(err){
+    console.error(err);
+    alert("Não foi possível excluir no Supabase.");
+  }
+}
+
+// ---------- modal: marcar prova ----------
+let dataProvaAtual = null;
+
+function abrirModalProva(chave){
+  dataProvaAtual = chave;
+  const [ano, mes, dia] = chave.split("-");
+  document.getElementById("titulo-prova").textContent = `Marcar prova — ${dia}/${mes}`;
+  document.getElementById("input-prova").value =
+    (provasMarcadas[chave] && provasMarcadas[chave] !== "N/A") ? provasMarcadas[chave] : "";
+  document.getElementById("overlay-prova").classList.add("aberto");
+}
+
+function fecharModalProva(){
+  document.getElementById("overlay-prova").classList.remove("aberto");
+  dataProvaAtual = null;
+}
+
+async function upsertProva(valor){
+  const { error } = await db.from("provas_marcadas")
+    .upsert({ data: dataProvaAtual, marcador: valor }, { onConflict: "data" });
+  if(error) throw error;
+}
+
+async function salvarProva(){
+  const valor = document.getElementById("input-prova").value.trim();
+  if(!valor){ alert("Digite o nome do professor/disciplina ou use 'Marcar N/A'."); return; }
+  try{
+    await upsertProva(valor);
+    await carregarDados();
+    fecharModalProva();
+    renderTudo();
+  }catch(err){
+    console.error(err);
+    alert("Não foi possível salvar no Supabase.");
+  }
+}
+
+async function marcarNA(){
+  try{
+    await upsertProva("N/A");
+    await carregarDados();
+    fecharModalProva();
+    renderTudo();
+  }catch(err){
+    console.error(err);
+    alert("Não foi possível salvar no Supabase.");
+  }
+}
+
+// ---------- inicialização ----------
+(async function iniciar(){
+  await carregarDados();
+  renderTudo();
+})();
+</script>
+
+</body>
+</html>
